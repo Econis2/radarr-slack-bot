@@ -190,14 +190,15 @@ module.exports = {
 
         }
 
-        let textArr = body.text.split(' ')
+        let textArr = body.text.split(':')
         let type = textArr[0]
         
         if(type == "title"){
-            request.params['term'] = encodeURI(textArr.slice(1,textArr.length).join(' '))
+            request.params['term'] = encodeURI(textArr[1])
             return request
         }
         else if(type == "tmdb" || type == "imdb"){
+            
             request.url = request.url + '/' + type
             request.params[type + "Id"] = textArr[1]
             return request
