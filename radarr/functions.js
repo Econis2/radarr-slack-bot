@@ -57,18 +57,22 @@ module.exports = {
     },
 
     slackMovieMessageBuilder (movie) {
-        // let movie = {
-        //     id: id,
-        //     title: string,
-        //     image_url: string
-        // }
-
         let m_title = {
             type: "section",
             text: {
                 type: "mrkdwn",
                 text: "*" + movie.title + "*"
             }
+        }
+
+        let description = {
+            type: "context",
+            elements: [
+                {
+                    type: "mrkdwn",
+                    text: movie.description
+                }
+            ]
         }
 
         let cover = {
@@ -142,6 +146,7 @@ module.exports = {
         let movieMessage = {
             blocks: [
                 m_title,
+                description,
                 cover,
                 actions
             ]
@@ -184,21 +189,20 @@ module.exports = {
         let request = {
             url: module.exports.radar_config.url + '/api/movie/lookup',
             method: "GET",
-            params: {
-                apiKey: module.exports.radar_config.api_key
-            }
-
+            headers: {
+                'x-api-key': module.exports.radar_config.api_key
+            },
+            params: {}
         }
 
         let textArr = body.text.split(':')
-        let type = textArr[0]
-        
+        let type = textArr[0].toLowerCase()
+
         if(type == "title"){
-            request.params['term'] = encodeURI(textArr[1])
+            request.params['term'] = textArr[1]
             return request
         }
         else if(type == "tmdb" || type == "imdb"){
-            
             request.url = request.url + '/' + type
             request.params[type + "Id"] = textArr[1]
             return request
@@ -217,7 +221,6 @@ module.exports = {
                 let result = await axios(request)
                 
                 if(result.data.length){                
-                    
                     let final = []
 
                     for (let x = 0; x < result.data.length; x++) {
@@ -254,6 +257,7 @@ module.exports = {
                             id: movie.tmdbId,
                             title: movie.title,
                             image_url: movie.remotePoster,
+                            description: movie.overview,
                             full: full,
                             add: add
                         })
@@ -286,6 +290,7 @@ module.exports = {
                             id: movie.tmdbId,
                             title: movie.title,
                             image_url: movie.images[0].url,
+                            description: movie.overview,
                             full: full
                         }
 
@@ -296,8 +301,6 @@ module.exports = {
                     }
                     
                 }
-
-                
 
             }
 
@@ -391,10 +394,12 @@ module.exports = {
     },
 
     async select_movie (req, res){
+        console.log(req.body)
         let payload = JSON.parse(req.body.payload)
         let session = module.exports.session[payload.user.id]
 
         let movie = session.data[session.index].full
+        let b_movie = session.data[session.index]
         try{
             let r = await axios({
             url: module.exports.radar_config.url + '/api/movie',
@@ -406,15 +411,45 @@ module.exports = {
             data: movie
             })
 
+            let queMessage = {
+                blocks: [
+                    {
+                        type: "section",
+                        text: {
+                            type: "mrkdwn",
+                            text: " "
+                        },
+                        fields: [
+                            {
+                                type: "mrkdwn",
+                                text: "*[STATUS]*"
+                            },
+                            {
+                                type: "mrkdwn",
+                                text: b_movie.title
+                            },
+                            {
+                                type: "mrkdwn",
+                                text: "QUEUED"
+                            },
+                            {
+                                type: "mrkdwn",
+                                text: b_movie.description.substring(0,150) + '...'
+                            }                
+                        ],
+                        accessory: {
+                            type: "image",
+                            image_url: b_movie.image_url,
+                            alt_text: b_movie.title
+                        }
+                    }
+                ]
+            }
+
             let r2 = await axios({
                 url: payload.response_url,
                 method: "POST",
-                data: {
-                    "response_type": "ephemeral",
-                    "replace_original": true,
-                    "delete_original": true,
-                    "text": ""
-                }
+                data: queMessage
             })
 
         }
