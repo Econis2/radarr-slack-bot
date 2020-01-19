@@ -1,17 +1,19 @@
 const crypto = require('crypto')
 const qs = require('qs')
 const axios = require('axios')
+const secrets = require('../secrets')
+
 
 module.exports = {
 
     session: {},
 
     radar_config: {
-        url: "{ RADARR_URI }",
-        api_key: process.env.API_KEY
+        url: secrets.RADARR_URI,
+        api_key: secrets.API_KEY
     },
 
-    slack_secret: process.env.SLACK_SECRET,
+    slack_secret: secrets.SLACK_SECRET,
 
     slackVerification (req, res, next) {
         let slackSig = req.headers['x-slack-signature']
