@@ -2,7 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const radarr = require('./radarr/index')
 
-const port = process.env.PORT || 8081
+const port = process.env.PORT || 9889
 const app = express()
 
 app.use(bodyParser.urlencoded({extended: true}))
